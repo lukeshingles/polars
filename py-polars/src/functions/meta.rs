@@ -21,9 +21,10 @@ pub fn set_float_fmt(fmt: &str) -> PyResult<()> {
     let fmt = match fmt {
         "full" => FloatFmt::Full,
         "mixed" => FloatFmt::Mixed,
+        "scientific" => FloatFmt::Scientific,
         e => {
             return Err(PyValueError::new_err(format!(
-                "fmt must be one of {{'full', 'mixed'}}, got {e}",
+                "fmt must be one of {{'full', 'mixed', 'scientific'}}, got {e}",
             )))
         },
     };
@@ -36,6 +37,7 @@ pub fn get_float_fmt() -> PyResult<String> {
     let strfmt = match polars_core::fmt::get_float_fmt() {
         FloatFmt::Full => "full",
         FloatFmt::Mixed => "mixed",
+        FloatFmt::Scientific => "scientific",
     };
     Ok(strfmt.to_string())
 }

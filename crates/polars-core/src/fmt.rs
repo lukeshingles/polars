@@ -40,6 +40,7 @@ const DEFAULT_LIST_LEN_LIMIT: usize = 3;
 pub enum FloatFmt {
     Mixed,
     Full,
+    Scientific,
 }
 static FLOAT_PRECISION: RwLock<Option<usize>> = RwLock::new(None);
 static FLOAT_FMT: AtomicU8 = AtomicU8::new(FloatFmt::Mixed as u8);
@@ -53,6 +54,7 @@ pub fn get_float_fmt() -> FloatFmt {
     match FLOAT_FMT.load(Ordering::Relaxed) {
         0 => FloatFmt::Mixed,
         1 => FloatFmt::Full,
+        2 => FloatFmt::Scientific,
         _ => panic!(),
     }
 }
@@ -846,11 +848,17 @@ fn fmt_float<T: Num + NumCast>(f: &mut Formatter<'_>, width: usize, v: T) -> fmt
     let float_precision = get_float_precision();
 
     if let Some(precision) = float_precision {
-        if format!("{v:.precision$}", precision = precision).len() > 19 {
+        if matches!(get_float_fmt(), FloatFmt::Scientific)
+            || format!("{v:.precision$}", precision = precision).len() > 19
+        {
             return write!(f, "{v:>width$.precision$e}", precision = precision);
         }
         let s = format!("{v:>width$.precision$}", precision = precision);
         return write!(f, "{}", fmt_float_string(s.as_str()));
+    }
+
+    if matches!(get_float_fmt(), FloatFmt::Scientific) {
+        return write!(f, "{v:>width$e}");
     }
 
     if matches!(get_float_fmt(), FloatFmt::Full) {
